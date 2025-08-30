@@ -1,8 +1,10 @@
 package com.example.carins.web;
 
 import com.example.carins.model.Car;
+import com.example.carins.model.Claim;
 import com.example.carins.service.CarService;
 import com.example.carins.web.dto.CarDto;
+import com.example.carins.web.dto.ClaimDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +29,11 @@ public class CarController {
         return service.listCars().stream().map(this::toDto).toList();
     }
 
+    @GetMapping("/cars/{carId}/history")
+    public List<ClaimDto> getCarHistory(@PathVariable Long carId) {
+        return service.listClaims(carId).stream().map(this::toDto).toList();
+    }
+
     @GetMapping("/cars/{carId}/insurance-valid")
     public ResponseEntity<?> isInsuranceValid(@PathVariable Long carId, @RequestParam String date) {
         LocalDate d;
@@ -47,5 +54,11 @@ public class CarController {
                 o != null ? o.getEmail() : null);
     }
 
-    public record InsuranceValidityResponse(Long carId, String date, boolean valid) {}
+    private ClaimDto toDto(Claim c) {
+        return new ClaimDto(c.getId(), c.getClaimDate(), c.getDescription(), c.getAmount(),
+                c.getCar() != null ? c.getCar().getId() : null);
+    }
+
+    public record InsuranceValidityResponse(Long carId, String date, boolean valid) {
+    }
 }

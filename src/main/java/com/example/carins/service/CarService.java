@@ -1,7 +1,9 @@
 package com.example.carins.service;
 
 import com.example.carins.model.Car;
+import com.example.carins.model.Claim;
 import com.example.carins.repo.CarRepository;
+import com.example.carins.repo.ClaimRepository;
 import com.example.carins.repo.InsurancePolicyRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,14 +17,23 @@ public class CarService {
 
     private final CarRepository carRepository;
     private final InsurancePolicyRepository policyRepository;
+    private final ClaimRepository claimRepository;
 
-    public CarService(CarRepository carRepository, InsurancePolicyRepository policyRepository) {
+    public CarService(CarRepository carRepository, InsurancePolicyRepository policyRepository, ClaimRepository claimRepository) {
         this.carRepository = carRepository;
         this.policyRepository = policyRepository;
+        this.claimRepository = claimRepository;
     }
 
     public List<Car> listCars() {
         return carRepository.findAll();
+    }
+
+    public List<Claim> listClaims(Long carId) {
+        if (carId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Car id must be provided");
+        }
+        return claimRepository.findByCarIdOrderByClaimDateAsc(carId);
     }
 
     public boolean isInsuranceValid(Long carId, LocalDate date) {
