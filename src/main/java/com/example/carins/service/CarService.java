@@ -3,7 +3,9 @@ package com.example.carins.service;
 import com.example.carins.model.Car;
 import com.example.carins.repo.CarRepository;
 import com.example.carins.repo.InsurancePolicyRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,8 +26,21 @@ public class CarService {
     }
 
     public boolean isInsuranceValid(Long carId, LocalDate date) {
-        if (carId == null || date == null) return false;
-        // TODO: optionally throw NotFound if car does not exist
+        final int validityInterval = 50; //today ±50 years, adjust according to business standards
+        LocalDate minDate = LocalDate.now().minusYears(validityInterval);
+        LocalDate maxDate = LocalDate.now().plusYears(validityInterval);
+
+        if (carId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Car id must be provided");
+        }
+        if (date == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date must be provided");
+        } else if (date.isBefore(minDate) || date.isAfter(maxDate)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date is outside the supported range: " + minDate + " to " + maxDate);
+        }
+        if (!carRepository.existsById(carId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Car not found");
+        }
         return policyRepository.existsActiveOnDate(carId, date);
     }
 }

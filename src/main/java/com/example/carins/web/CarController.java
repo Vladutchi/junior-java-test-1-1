@@ -3,10 +3,13 @@ package com.example.carins.web;
 import com.example.carins.model.Car;
 import com.example.carins.service.CarService;
 import com.example.carins.web.dto.CarDto;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @RestController
@@ -26,8 +29,12 @@ public class CarController {
 
     @GetMapping("/cars/{carId}/insurance-valid")
     public ResponseEntity<?> isInsuranceValid(@PathVariable Long carId, @RequestParam String date) {
-        // TODO: validate date format and handle errors consistently
-        LocalDate d = LocalDate.parse(date);
+        LocalDate d;
+        try {
+            d = LocalDate.parse(date);
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD.");
+        }
         boolean valid = service.isInsuranceValid(carId, d);
         return ResponseEntity.ok(new InsuranceValidityResponse(carId, d.toString(), valid));
     }
