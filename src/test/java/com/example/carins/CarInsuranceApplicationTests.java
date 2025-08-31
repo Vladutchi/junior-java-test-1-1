@@ -1,6 +1,10 @@
 package com.example.carins;
 
+import com.example.carins.model.Car;
 import com.example.carins.model.Claim;
+import com.example.carins.model.Owner;
+import com.example.carins.repo.CarRepository;
+import com.example.carins.repo.OwnerRepository;
 import com.example.carins.service.CarService;
 import com.example.carins.web.CarController;
 import com.example.carins.web.dto.ClaimDto;
@@ -8,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -20,9 +25,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class CarInsuranceApplicationTests {
 
     @Autowired
+    CarRepository repository;
+    @Autowired
     CarService service;
     @Autowired
     CarController controller;
+    @Autowired
+    OwnerRepository ownerRepository;
+
     @Value("${insurance.validity-interval-years:50}")
     private int validityIntervalYears;
 
@@ -58,7 +68,7 @@ class CarInsuranceApplicationTests {
         }
     }
 
-    // --- Task C tests: insurance-valid validation ---
+    // --- Task C tests: insurance validation ---
 
     @Test
     void insuranceValidityBasic() {
@@ -128,5 +138,20 @@ class CarInsuranceApplicationTests {
     void maxBoundary_ok() {
         LocalDate maxDate = LocalDate.now().plusYears(validityIntervalYears);
         assertDoesNotThrow(() -> service.isInsuranceValid(1L, maxDate));
+    }
+
+    // --- Unique VIN test ---
+
+    @Test
+    void duplicateVin_throwsDataIntegrityViolation() {
+        Owner owner = ownerRepository.save(new Owner("Test Owner", "owner@example.com"));
+
+        Car first = new Car("VIN-TEST-12345", "MakeA", "ModelA", 2020, owner);
+        repository.saveAndFlush(first);
+
+        Car duplicate = new Car("VIN-TEST-12345", "MakeB", "ModelB", 2021, owner);
+
+        assertThrows(DataIntegrityViolationException.class,
+                () -> repository.saveAndFlush(duplicate));
     }
 }
