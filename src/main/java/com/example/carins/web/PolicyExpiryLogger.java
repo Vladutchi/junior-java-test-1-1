@@ -20,7 +20,7 @@ public class PolicyExpiryLogger {
         this.repo = repo;
     }
 
-    @Scheduled(cron = "0 0 0 * * *") //Runs at midnight and checks policies that expired the previous day.
+    @Scheduled(cron = "0 0 0 * * *")
     public void logYesterdayExpiredPolicies() {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         List<InsurancePolicy> expired = repo.findByEndDate(yesterday);

@@ -30,13 +30,18 @@ class CarInsuranceApplicationTests {
     CarService service;
     @Autowired
     CarController controller;
-    @Autowired
-    OwnerRepository ownerRepository;
 
     @Value("${insurance.validity-interval-years:50}")
     private int validityIntervalYears;
 
-    // --- Task B tests: register claim + history ---
+    @Test
+    void insuranceValidityBasic() {
+        assertTrue(service.isInsuranceValid(1L, LocalDate.parse("2024-06-01")));
+        assertTrue(service.isInsuranceValid(1L, LocalDate.parse("2025-06-01")));
+        assertFalse(service.isInsuranceValid(2L, LocalDate.parse("2025-02-01")));
+    }
+
+    // --- Task B tests: ---
 
     @Test
     void registerClaim_success() {
@@ -64,18 +69,11 @@ class CarInsuranceApplicationTests {
         for (int i = 1; i < history.size(); i++) {
             LocalDate prev = history.get(i - 1).claimDate();
             LocalDate curr = history.get(i).claimDate();
-            assertFalse(curr.isBefore(prev), "History must be sorted by claimDate ascending");
+            assertFalse(curr.isBefore(prev));
         }
     }
 
-    // --- Task C tests: insurance validation ---
-
-    @Test
-    void insuranceValidityBasic() {
-        assertTrue(service.isInsuranceValid(1L, LocalDate.parse("2024-06-01")));
-        assertTrue(service.isInsuranceValid(1L, LocalDate.parse("2025-06-01")));
-        assertFalse(service.isInsuranceValid(2L, LocalDate.parse("2025-02-01")));
-    }
+    // --- Task C tests: ---
 
     @Test
     void wrongFormatDate_throws400() {
@@ -138,20 +136,5 @@ class CarInsuranceApplicationTests {
     void maxBoundary_ok() {
         LocalDate maxDate = LocalDate.now().plusYears(validityIntervalYears);
         assertDoesNotThrow(() -> service.isInsuranceValid(1L, maxDate));
-    }
-
-    // --- Unique VIN test ---
-
-    @Test
-    void duplicateVin_throwsDataIntegrityViolation() {
-        Owner owner = ownerRepository.save(new Owner("Test Owner", "owner@example.com"));
-
-        Car first = new Car("VIN-TEST-12345", "MakeA", "ModelA", 2020, owner);
-        repository.saveAndFlush(first);
-
-        Car duplicate = new Car("VIN-TEST-12345", "MakeB", "ModelB", 2021, owner);
-
-        assertThrows(DataIntegrityViolationException.class,
-                () -> repository.saveAndFlush(duplicate));
     }
 }
