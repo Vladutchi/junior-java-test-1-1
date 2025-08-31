@@ -5,10 +5,13 @@ import com.example.carins.model.Claim;
 import com.example.carins.service.CarService;
 import com.example.carins.web.dto.CarDto;
 import com.example.carins.web.dto.ClaimDto;
+import com.example.carins.web.dto.CreateClaimRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -35,30 +38,42 @@ public class CarController {
     }
 
     @GetMapping("/cars/{carId}/insurance-valid")
-    public ResponseEntity<?> isInsuranceValid(@PathVariable Long carId, @RequestParam String date) {
+    public ResponseEntity<InsuranceValidityResponse> isInsuranceValid(@PathVariable Long carId, @RequestParam String date) {
         LocalDate d;
         try {
             d = LocalDate.parse(date);
         } catch (DateTimeParseException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD.");
         }
+
         boolean valid = service.isInsuranceValid(carId, d);
         return ResponseEntity.ok(new InsuranceValidityResponse(carId, d.toString(), valid));
     }
 
+    @PostMapping("/cars/{carId}/claims")
+    public ResponseEntity<ClaimDto> registerClaim(@PathVariable Long carId, @Valid @RequestBody CreateClaimRequest body) {
+        var saved = service.registerClaim(carId, body.claimDate(), body.description(), body.amount());
+        var location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(saved.getId()).toUri();
+        return ResponseEntity.created(location).body(toDto(saved));
+    }
+
     private CarDto toDto(Car c) {
         var o = c.getOwner();
-        return new CarDto(c.getId(), c.getVin(), c.getMake(), c.getModel(), c.getYearOfManufacture(),
+        return new CarDto(
+                c.getId(), c.getVin(), c.getMake(), c.getModel(), c.getYearOfManufacture(),
                 o != null ? o.getId() : null,
                 o != null ? o.getName() : null,
-                o != null ? o.getEmail() : null);
+                o != null ? o.getEmail() : null
+        );
     }
 
     private ClaimDto toDto(Claim c) {
-        return new ClaimDto(c.getId(), c.getClaimDate(), c.getDescription(), c.getAmount(),
-                c.getCar() != null ? c.getCar().getId() : null);
+        return new ClaimDto(
+                c.getId(), c.getClaimDate(), c.getDescription(), c.getAmount(),
+                c.getCar() != null ? c.getCar().getId() : null
+        );
     }
 
-    public record InsuranceValidityResponse(Long carId, String date, boolean valid) {
-    }
+    public record InsuranceValidityResponse(Long carId, String date, boolean valid) {}
 }

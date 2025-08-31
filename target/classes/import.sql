@@ -8,6 +8,7 @@ INSERT INTO insurancepolicy (id, car_id, provider, start_date, end_date) VALUES 
 INSERT INTO insurancepolicy (id, car_id, provider, start_date, end_date) VALUES (2, 1, 'Groupama', DATE '2025-01-01', DATE '2026-01-01');
 INSERT INTO insurancepolicy (id, car_id, provider, start_date, end_date) VALUES (3, 2, 'Allianz', DATE '2025-03-01', DATE '2025-09-30');
 
-INSERT INTO claim (id, car_id, claim_date, description, amount) VALUES (1, 1, DATE '2025-01-15', 'Rear bumper replacement after collision', 850.00);
-INSERT INTO claim (id, car_id, claim_date, description, amount) VALUES (2, 1, DATE '2025-03-10', 'Windshield crack repair', 1200.00);
-INSERT INTO claim (id, car_id, claim_date, description, amount) VALUES (3, 2, DATE '2025-04-05', 'Front left door dent repair', 600.00);
+
+INSERT INTO claim (car_id, claim_date, description, amount) VALUES (1, DATE '2025-01-15', 'Rear bumper replacement after collision', 850.00);
+INSERT INTO claim (car_id, claim_date, description, amount) VALUES (1, DATE '2025-03-10', 'Windshield crack repair', 1200.00);
+INSERT INTO claim (car_id, claim_date, description, amount) VALUES (2, DATE '2025-04-05', 'Front left door dent repair', 600.00);
